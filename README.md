@@ -7,3 +7,5 @@ And mostly the primary tool is foot and dbclient for actual control and data tra
 
 The concept is as simple as above really. A very basic init system is used as a result. The whole point is that this role does not need to have persistence to work well.
 So it runs purely in RAM. It expects as a result - a monolithic kernel with needed drivers baked in (not modules) and even better a DTB with NOR (SPI) and storage disabled.
+
+The system as it is configured uses the postmarketOS debug interface, so only the ChromeOS kernel partition and /boot for personal configuration file storage, rootfs, and init script. Anything persistent is kept in the personalfiles dir and is completely up to the user. Have fun.
