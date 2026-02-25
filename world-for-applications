@@ -1,0 +1,12 @@
+alpine-baselayout
+alpine-keys
+alpine-release
+apk-tools
+busybox
+font-wqy-zenhei
+libc-utils
+librewolf
+mpv
+shadow-login
+tailscale
+yt-dlp

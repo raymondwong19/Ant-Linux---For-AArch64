@@ -1,0 +1,92 @@
+#!/bin/ash
+
+# Setup script for the RAM only ARM64 Alpine distro based on the Postmarketos debug shell (no pmOS_root).
+
+
+echo "Extracting the prepared rootfs from /boot/rootfs.tar.gz to /sysroot"
+tar -xzf /boot/rootfs.tar.gz -C /sysroot
+echo "End of extraction of rootfs to /sysroot"
+
+
+echo "Starting environmental permissions setup phase"
+
+echo "Programs killed to avoid backdoors and network access"
+echo "Killing telnetd"
+pkill telnetd
+echo "mdev -d is un-necessary since nothing will ever be plugged in"
+pkill mdev
+echo "Just run mdev -s manually if you need a say re-insert your SD card"
+echo "End of pruning un-necessary services"
+
+
+echo "Mounting the applications squashfs in /sysroot/apps-chroot"
+mkdir -p /sysroot/apps-chroot
+mount -o loop /sysroot/applications-rootfs.squash /sysroot/apps-chroot
+echo "End of mounting applications squashfs section"
+
+
+echo "Binding proc, sys, dev, dev/pts, run, in sysroot and /sysroot/apps-chroot - debug shell already prepared them"
+	for mounts in proc sys dev dev/pts run ; do
+		mount -o bind /$mounts /sysroot/$mounts
+	done
+	for mounts in proc sys dev dev/pts run ; do
+		mount -o bind /$mounts /sysroot/apps-chroot/$mounts
+	done
+
+echo "Creating a /dev/shm as it is required for libinput on non-root users"
+mkdir -p /sysroot/dev/shm && mount -t tmpfs -o rw,nosuid,nodev,inode64 tmpfs /sysroot/dev/shm
+mount -o bind /sysroot/dev/shm /sysroot/apps-chroot/dev/shm
+
+echo "Creating a shared /tmp between /sysroot and /sysroot/apps-chroot"
+mount -t tmpfs -o rw,nosuid,nodev,mode=1777 tmpfs /sysroot/tmp
+mount -o bind /sysroot/tmp /sysroot/apps-chroot/tmp
+
+echo "End of Bindmount section"
+
+
+echo "Changing permissions on /dev/ptmx to root:tty"
+chroot /sysroot /bin/chown root:tty /dev/ptmx
+echo "TTY is now owned by non-root groups"
+
+echo "End of the environmental permissions setup"
+
+
+echo "Start of the copying configs and starting services section"
+
+echo "Starting bare minimum services for a sway terminal"
+
+echo "Setting the hostname to Snail"
+echo "Snail" | tee /proc/sys/kernel/hostname
+
+echo "Setting up ufw in the chroot"
+echo "Copying /boot/personalfiles/ufw/sysctl.conf and before.rules to /sysroot/etc/ufw/"
+cp /boot/personalfiles/ufw/sysctl.conf /boot/personalfiles/ufw/before.rules /sysroot/etc/ufw
+echo "Copying /boot/personalfiles/ufw/default-ufw to /sysroot/etc/default/ufw"
+cp /boot/personalfiles/ufw/default-ufw /sysroot/etc/default/ufw
+echo "" | tee /sysroot/etc/ufw/before6.rules
+chroot /sysroot /usr/sbin/ufw logging low
+chroot /sysroot /usr/sbin/ufw default deny incoming
+chroot /sysroot /usr/sbin/ufw enable
+echo "hostname and ufw started, those are all the required services - libudev-zero is passive"
+
+
+echo "Copying some configuration files"
+echo "Copying wpa_supplicant network configurations to /sysroot/tmp"
+cp /boot/personalfiles/wpa-* /sysroot/tmp
+chmod 600 /sysroot/tmp/wpa-*
+
+echo "Copying doas config file to /sysroot/etc/doas.conf"
+cp /boot/personalfiles/doas.conf /sysroot/etc/doas.conf
+chmod 600 /sysroot/etc/doas.conf
+
+echo "Copying /boot/personalfiles/sway to /sysroot/etc/sway/config"
+cp /boot/personalfiles/sway /sysroot/etc/sway/config
+
+echo "Copying personal scripts which starts with start- to /scripts"
+cp /boot/personalfiles/start-* /sysroot/scripts
+
+echo "End of the copying configs and starting services section"
+
+echo "" && echo ""
+echo "If you need more functions like Sway or Wi-Fi, check the /scripts directory in the /sysroot"
+echo "And run exec chroot /sysroot /bin/ash or exec chroot /sysroot /bin/su - snail or something"
