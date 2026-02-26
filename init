@@ -41,6 +41,10 @@ echo "Creating a shared /tmp between /sysroot and /sysroot/apps-chroot"
 mount -t tmpfs -o rw,nosuid,nodev,mode=1777 tmpfs /sysroot/tmp
 mount -o bind /sysroot/tmp /sysroot/apps-chroot/tmp
 
+echo "Bindmounting the same passwd and group files to apps-chroot"
+mount -o bind /sysroot/etc/passwd /sysroot/apps-chroot/etc/passwd
+mount -o bind /sysroot/etc/group /sysroot/apps-chroot/etc/group
+
 echo "End of Bindmount section"
 
 
