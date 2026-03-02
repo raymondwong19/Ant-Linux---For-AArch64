@@ -45,6 +45,12 @@ echo "Bindmounting the same passwd and group files to apps-chroot"
 mount -o bind /sysroot/etc/passwd /sysroot/apps-chroot/etc/passwd
 mount -o bind /sysroot/etc/group /sysroot/apps-chroot/etc/group
 
+echo "Binding a writable tmp directory for Snail in the apps-chroot"
+mkdir /sysroot/tmp/snail && chown -R 1000:1000 /sysroot/tmp/snail
+mkdir /sysroot/home/snail/apps-home
+mount -o bind /sysroot/tmp/snail /sysroot/home/snail/apps-home
+mount -o bind /sysroot/tmp/snail /sysroot/apps-chroot/home/snail
+
 echo "End of Bindmount section"
 
 
